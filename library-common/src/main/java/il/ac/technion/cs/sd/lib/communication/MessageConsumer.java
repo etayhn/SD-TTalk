@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 public class MessageConsumer implements BiConsumer<Messenger, String>{
 
-	private static final long TIMEOUT_FOR_ACK_IN_MILLIES = 100;
+	private static final long TIMEOUT_FOR_ACK_IN_MILLIES = 500;
 
 	private LinkedBlockingQueue<Message> outgoingMessages;
 	

@@ -119,16 +119,17 @@ public class LibraryTest {
 							serverCommunicator.send(clientAddress, data);
 							});
 
-		for(int i=0; i< 100 ; i++){
+		int numMessages = 5;
+		for(int i=0; i< numMessages ; i++){
 			clientCommunicator.send(serverAddress, data);
 		}
 		
-		for(int i=0; i< 100 ; i++){
+		for(int i=0; i< numMessages ; i++){
 			String dataReceivedInServer = (String) StringConverter.convertFromString(serverMessages.take());
 			assertEquals(data, dataReceivedInServer);
 		}
 		
-		for(int i=0; i< 100 ; i++){
+		for(int i=0; i< numMessages ; i++){
 
 			String dataReceivedInClient = (String) StringConverter.convertFromString(clientMessages.take());
 			assertEquals(data, dataReceivedInClient);
