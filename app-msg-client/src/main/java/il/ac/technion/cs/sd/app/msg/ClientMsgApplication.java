@@ -35,6 +35,7 @@ public class ClientMsgApplication {
 	public void login(Consumer<InstantMessage> messageConsumer,
 			Function<String, Boolean> friendshipRequestHandler,
 			BiConsumer<String, Boolean> friendshipReplyConsumer) {
+		System.out.println("Hi");
 		throw new UnsupportedOperationException("Not implemented");
 	}
 	
