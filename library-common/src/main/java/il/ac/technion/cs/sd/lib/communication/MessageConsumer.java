@@ -39,6 +39,7 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 		}
 		// send Ack
 		sendAck(messenger, message);
+		//deosnsdf
 		
 		// send message to the app consumer.
 		appConsumer.accept(message.data);
