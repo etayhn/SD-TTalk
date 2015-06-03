@@ -19,6 +19,7 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 	private Consumer<String> appConsumer;
 	
 	private String myAddress;
+
 	
 	public MessageConsumer(Consumer<String> consumer, String address) {
 		
@@ -26,7 +27,6 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 		incomingMessages = new LinkedBlockingQueue<Message>();
 		outgoingMessages = new LinkedBlockingQueue<Message>();
 		myAddress = address;
-		
 	}
 	
 	@Override

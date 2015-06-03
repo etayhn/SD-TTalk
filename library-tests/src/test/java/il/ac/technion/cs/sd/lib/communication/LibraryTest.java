@@ -43,11 +43,11 @@ public class LibraryTest {
 		clientAddress = "client";
 		client2Address = "client2";
 		
-		serverCommunicator = new ServerCommunicator(serverAddress, x -> serverMessages.add(x));
+		serverCommunicator = new ServerCommunicator(serverAddress, (x) -> serverMessages.add(x));
 		clientCommunicator = new ClientCommunicator(clientAddress, serverAddress,
-																x -> clientMessages.add(x));
+				(x) -> clientMessages.add(x));
 		clientCommunicator2 = new ClientCommunicator(client2Address, serverAddress,
-				x -> clientMessages.add(x));
+				(x) -> clientMessages.add(x));
 
 		data = "abcd";
 		data2 = "aaaa";
@@ -114,7 +114,7 @@ public class LibraryTest {
 	public void testServerSendDuringReceiveIsReceivedInClient() throws InterruptedException{
 
 		serverCommunicator.stop();
-		serverCommunicator = new ServerCommunicator(serverAddress, x -> 
+		serverCommunicator = new ServerCommunicator(serverAddress, (x) -> 
 							{serverMessages.add(x);
 							serverCommunicator.send(clientAddress, data);
 							});

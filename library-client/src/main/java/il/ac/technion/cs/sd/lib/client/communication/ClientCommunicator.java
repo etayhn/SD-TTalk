@@ -1,5 +1,6 @@
 package il.ac.technion.cs.sd.lib.client.communication;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import il.ac.technion.cs.sd.lib.communication.Communicator;

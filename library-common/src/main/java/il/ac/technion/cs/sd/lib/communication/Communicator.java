@@ -5,6 +5,7 @@ import il.ac.technion.cs.sd.msg.MessengerException;
 import il.ac.technion.cs.sd.msg.MessengerFactory;
 
 import java.io.IOException;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import il.ac.technion.cs.sd.lib.serialization.StringConverter;

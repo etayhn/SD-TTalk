@@ -1,11 +1,20 @@
 package il.ac.technion.cs.sd.app.msg;
 
+import il.ac.technion.cs.sd.lib.server.communication.ServerCommunicator;
+
+import java.util.Map;
+import java.util.function.Consumer;
+
 
 /**
  * The server side of the TMail application. <br>
  * This class is mainly used in our tests to start, stop, and clean the server
  */
 public class ServerMailApplication {
+	
+	private ServerCommunicator communicator;
+	
+	private ServerMessageConsumer consumer;
 	
     /**
      * Starts a new mail server. Servers with the same name retain all their information until

@@ -1,9 +1,9 @@
 package il.ac.technion.cs.sd.app.msg;
 
 public class InstantMessage {
-	private final String from;
-	private final String to;
-	private final String content;
+	public final String from;
+	public final String to;
+	public final String content;
 
 	public InstantMessage(String from, String to, String content) {
 		super();
