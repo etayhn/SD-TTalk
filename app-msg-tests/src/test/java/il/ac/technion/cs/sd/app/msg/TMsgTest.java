@@ -19,7 +19,7 @@ public class TMsgTest {
 	}
 	
 	@Before
-	public void setp() {
+	public void setUp() {
 		server.start(); // non-blocking
 	}
 	
