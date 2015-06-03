@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import com.google.gson.Gson;
 
 public class FileHandler {
 
@@ -15,8 +14,7 @@ public class FileHandler {
 		if(fileName == null || data == null){
 			throw new IllegalArgumentException("null parameters for write to file");
 		}
-		Gson gson = new Gson();
-		String dataAsJson = gson.toJson(data);
+		String dataAsJson = StringConverter.convertToString(data);
 		
 		FileOutputStream outputStream = new FileOutputStream(fileName);
 		ObjectOutputStream objectStream = new ObjectOutputStream(outputStream);
@@ -26,7 +24,7 @@ public class FileHandler {
 		
 	}
 
-	public static <T> T readFromFile(String fileName, Class<T> classOfT) throws IOException{
+	public static Object readFromFile(String fileName) throws IOException{
 		
 		if(fileName == null ){
 			throw new IllegalArgumentException("null parameters for read from file");
@@ -47,8 +45,8 @@ public class FileHandler {
 			in.close();
 			input.close();
 		}
-		Gson gson = new Gson();
-        return gson.fromJson(receivedData, classOfT);
+		
+		return StringConverter.convertFromString(receivedData);
 	}
 	
 }

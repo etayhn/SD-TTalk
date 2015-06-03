@@ -61,13 +61,17 @@ public class LibraryTest {
 			serverCommunicator.stop();
 		if (!clientCommunicator.isCommunicatorClosed())
 			clientCommunicator.stop();
+		
+		if (!clientCommunicator2.isCommunicatorClosed())
+			clientCommunicator2.stop();
+
 	}
 
 	@Test
 	public void testServerShouldReceiveAfterClientSend() throws InterruptedException {
 		for(int i=0; i< 100 ; i++){
 			clientCommunicator.send(data);
-			String dataReceived = StringConverter.convertFromString(serverMessages.take(), String.class);
+			String dataReceived = (String) StringConverter.convertFromString(serverMessages.take());
 			assertEquals(data, dataReceived);
 		}
 	}
@@ -77,7 +81,7 @@ public class LibraryTest {
 	public void testClientShouldReceiveAfterServerSend() throws InterruptedException {
 		serverCommunicator.send(clientAddress, data);
 		
-		String dataReceived = StringConverter.convertFromString(clientMessages.take(), String.class);
+		String dataReceived = (String) StringConverter.convertFromString(clientMessages.take());
 		assertEquals(data, dataReceived);
 	}
 
@@ -98,13 +102,40 @@ public class LibraryTest {
 		clientCommunicator.send(data);
 		clientCommunicator2.send(data2);
 		
-		String dataReceived = StringConverter.convertFromString(serverMessages.take(), String.class);
+		String dataReceived = (String) StringConverter.convertFromString(serverMessages.take());
 		assertEquals(data, dataReceived);
 		
-		dataReceived = StringConverter.convertFromString(serverMessages.take(), String.class);
+		dataReceived = (String) StringConverter.convertFromString(serverMessages.take());
 		assertEquals(data2, dataReceived);
 
 	}
+	
+	@Test
+	public void testServerSendDuringReceiveIsReceivedInClient() throws InterruptedException{
+
+		serverCommunicator.stop();
+		serverCommunicator = new ServerCommunicator(serverAddress, x -> 
+							{serverMessages.add(x);
+							serverCommunicator.send(clientAddress, data);
+							});
+
+		for(int i=0; i< 100 ; i++){
+			clientCommunicator.send(serverAddress, data);
+		}
+		
+		for(int i=0; i< 100 ; i++){
+			String dataReceivedInServer = (String) StringConverter.convertFromString(serverMessages.take());
+			assertEquals(data, dataReceivedInServer);
+		}
+		
+		for(int i=0; i< 100 ; i++){
+
+			String dataReceivedInClient = (String) StringConverter.convertFromString(clientMessages.take());
+			assertEquals(data, dataReceivedInClient);
+		}
+
+	}
+	
 
 
 }

@@ -32,7 +32,7 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 	@Override
 	public void accept(Messenger messenger, String data) {
 
-		Message message = StringConverter.convertFromString(data, Message.class);
+		Message message = (Message) StringConverter.convertFromString(data);
 		if(message.data.isEmpty()){
 			System.err.println("received empty message. shouldn't be ack");
 			return;
@@ -69,7 +69,7 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 				System.out.println("no ack returned yet.");
 				continue;
 			}
-			Message messageReceived = StringConverter.convertFromString(messageReceivedAsString,Message.class);
+			Message messageReceived = (Message) StringConverter.convertFromString(messageReceivedAsString);
 			// received Ack
 			if(messageReceived.data.isEmpty()){
 				break;

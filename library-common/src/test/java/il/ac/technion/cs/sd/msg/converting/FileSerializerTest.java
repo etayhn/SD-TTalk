@@ -18,7 +18,7 @@ public class FileSerializerTest {
 
 		String data = "data";
 		FileHandler.writeToFile(data, FILE_NAME);
-		String readFromFileString = FileHandler.readFromFile(FILE_NAME, String.class);
+		String readFromFileString = (String) FileHandler.readFromFile(FILE_NAME);
 		assertEquals(data, readFromFileString);
 
 	}
@@ -35,7 +35,7 @@ public class FileSerializerTest {
 
 		ComplexObject data = new ComplexObject(10, 5.5, "Avner");
 		FileHandler.writeToFile(data, FILE_NAME);
-		ComplexObject convertedBackObject = FileHandler.readFromFile(FILE_NAME, ComplexObject.class);
+		ComplexObject convertedBackObject = (ComplexObject) FileHandler.readFromFile(FILE_NAME);
 		assertEquals(data, convertedBackObject);
 
 	}

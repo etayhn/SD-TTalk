@@ -12,6 +12,9 @@ public class ComplexObject{
 		this.s = s;
 	}
 	
+//	public ComplexObject() {}
+	
+	
 	@Override
 	public boolean equals(Object obj) {
 		

@@ -1,7 +1,6 @@
 package il.ac.technion.cs.sd.lib.serialization;
 
-
-import com.google.gson.Gson;
+import com.thoughtworks.xstream.XStream;
 
 public class StringConverter {
 
@@ -10,18 +9,19 @@ public class StringConverter {
 		if (data == null) 
 			throw new IllegalArgumentException("data cannot be null");
 
-		Gson gson = new Gson();
-		return gson.toJson(data); 
+		XStream xstream = new XStream();
+		return xstream.toXML(data);
 		
 	}
 
-	public static <T> T convertFromString(String data, Class<T> classOfT){
+	public static Object convertFromString(String data){
 		
 		if (data == null) 
 			throw new IllegalArgumentException("data cannot be null");
 
-		Gson gson = new Gson();
-        return gson.fromJson(data, classOfT);
+		XStream xstream = new XStream();
+		return xstream.fromXML(data);
 	}
+	
 	
 }
