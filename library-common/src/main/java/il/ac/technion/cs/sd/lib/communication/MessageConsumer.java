@@ -4,86 +4,174 @@ import il.ac.technion.cs.sd.lib.serialization.StringConverter;
 import il.ac.technion.cs.sd.msg.Messenger;
 import il.ac.technion.cs.sd.msg.MessengerException;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class MessageConsumer implements BiConsumer<Messenger, String>{
 
-	private static final long TIMEOUT_FOR_ACK_IN_MILLIES = 500;
+	private static final String ACK = "";
+
+	private static final long TIMEOUT_FOR_ACK_IN_MILLIES = 100;
 
 	private LinkedBlockingQueue<Message> outgoingMessages;
 	
 	private LinkedBlockingQueue<Message> incomingMessages;
 	
-	private Consumer<String> appConsumer;
+	private LinkedBlockingQueue<String> ackMessages;
+	
+	private Consumer<Object> appConsumer;
+	
+	private Map<String, Message> lastMessageReceived;
 	
 	private String myAddress;
+	
+	private boolean waitingForAck;
 
 	
-	public MessageConsumer(Consumer<String> consumer, String address) {
+	public MessageConsumer(Consumer<Object> consumer, String address) {
 		
 		appConsumer = consumer;
 		incomingMessages = new LinkedBlockingQueue<Message>();
 		outgoingMessages = new LinkedBlockingQueue<Message>();
+		ackMessages =  new LinkedBlockingQueue<String>();
 		myAddress = address;
+		
+		lastMessageReceived = new ConcurrentHashMap<String, Message>();
 	}
 	
 	@Override
 	public void accept(Messenger messenger, String data) {
 
-		Message message = (Message) StringConverter.convertFromString(data);
-		if(message.data.isEmpty()){
-			System.err.println("received empty message. shouldn't be ack");
+		//received Ack
+		if(data.isEmpty()){
+//			System.err.println("address: " + myAddress + 
+//					", received empty message. shouldn't be ack");
+			
+			System.out.println("address: " + myAddress + ", received Ack");
+			ackMessages.add(data);
 			return;
 		}
+		Message message = (Message) StringConverter.convertFromString(data);
+		System.out.println("address: " + myAddress + ", received message: " + message);		
+
+		// other side has stopped
+		if(checkMessageAndSendAck(messenger, message)){
+
+			if(message.isStoppedMessage()){
+				
+				System.out.println("address: " + myAddress + ", received stop: ");		
+				lastMessageReceived.remove(message.from);
+				return;
+			}
+
+			if(!waitingForAck){
+
+				System.out.println("address: " + myAddress + ", uploading message: " + message + " to consumer");		
+				// send message to the app consumer.
+				appConsumer.accept(StringConverter.convertFromString(message.data));
+				
+			// deal with message in the send method.
+			}else{
+				System.out.println("address: " + myAddress + ", put message: " + message + " in queue");
+				incomingMessages.add(message);
+			}
+		}
+	}
+
+	private boolean checkMessageAndSendAck(Messenger messenger, Message message) {
+		Message lastMessageFromAddress = lastMessageReceived.get(message.from);
+		
+		// ignore message if it was already received.
+		if(lastMessageFromAddress!= null && lastMessageFromAddress.counter == message.counter){
+			System.err.println("address: " + myAddress +", message already received: "
+					+ message + ". counter should be bigger than: " 
+					+ lastMessageFromAddress.counter);
+			return false;
+		}
+		lastMessageReceived.put(message.from, message);
 		// send Ack
 		sendAck(messenger, message);
-		//deosnsdf
-		
-		// send message to the app consumer.
-		appConsumer.accept(message.data);
+		return true;
 	}
 
 	private void sendAck(Messenger messenger, Message message) {
-		Message ack = new Message(myAddress, "");
-		String ackAsString = StringConverter.convertToString(ack);
 		try {
-			messenger.send(message.from, ackAsString);
+			System.out.println("address: " + myAddress + 
+					", sent Ack. counter: " + message.counter + ", to: " + message.from);
+			messenger.send(message.from, ACK);
 		} catch (MessengerException e) {
 			throw new RuntimeException("Messenger Exception: " + e.getMessage());
 		}
 	}
 	
-	public void sendMessage(Message messageToSend, String to, Messenger messenger) throws InterruptedException, MessengerException {
+	public void sendMessage(Message messageToSend , String to, Messenger messenger) throws InterruptedException, MessengerException {
 
 		if(!outgoingMessages.isEmpty()){
-			System.out.println("trying to send message but still has message to send");
+			System.out.println("address: " + myAddress + 
+						", trying to send message but still has message to send");
 			outgoingMessages.add(messageToSend);
 		}
+		String messgeAsString = StringConverter.convertToString(messageToSend);
+		
 		// send message and wait for Ack
-		while(true){
-			messenger.send(to, StringConverter.convertToString(messageToSend));
-			String messageReceivedAsString = messenger.getNextMessage(TIMEOUT_FOR_ACK_IN_MILLIES); 
-
-			if( messageReceivedAsString == null){
-				System.out.println("no ack returned yet.");
-				continue;
-			}
-			Message messageReceived = (Message) StringConverter.convertFromString(messageReceivedAsString);
-			// received Ack
-			if(messageReceived.data.isEmpty()){
-				break;
-			// received a message from the server.
-			}else{
-				System.out.println("waited for ack but received a different message.");
-				incomingMessages.add(messageReceived);
-				sendAck(messenger, messageReceived);
-			}
+		boolean ackRecieved = false;
+		while(!ackRecieved){
+			messenger.send(to, messgeAsString);
+			System.out.println("address: " + myAddress + ", sent message: " + messageToSend 
+																			+ ", to: " + to);
+			ackRecieved = waitForAck(messenger);
 		}
 		
 		handleIncomingMessages(messenger);
 		
+	}
+
+	private boolean waitForAck(Messenger messenger) throws InterruptedException {
+//		System.out.println("address: " + myAddress + " waiting for ack"); 
+//		String messageReceivedAsString = messenger.getLastOrNextMessage(TIMEOUT_FOR_ACK_IN_MILLIES); 
+//
+//		if( messageReceivedAsString == null){
+//			System.out.println("address: " + myAddress + " waited for ack but received nothing");
+//			
+//			return false;
+//		}
+		// received Ack
+//		if(messageReceivedAsString.isEmpty()){
+//			System.out.println("address: " + myAddress + ", received ack ");
+//			return true;
+//			
+//		// received a different message instead of Ack.
+//		}else{
+//			Message messageReceived = (Message) StringConverter.convertFromString(messageReceivedAsString);
+//			System.out.println("address: " + myAddress + 
+//					", waited for ack but received a different message: " + messageReceived);
+//			if(checkMessageAndSendAck(messenger, messageReceived)){
+//				
+//				incomingMessages.add(messageReceived);
+//			}
+//			// keep waiting for ack.
+//			return false;
+//		}
+		waitingForAck=  true;
+		
+		String messageReceivedAsString = messenger.getLastOrNextMessage(TIMEOUT_FOR_ACK_IN_MILLIES); 
+
+		if(messageReceivedAsString!= null){
+			accept(messenger, messageReceivedAsString);
+		}
+		
+		String ack = ackMessages.poll(TIMEOUT_FOR_ACK_IN_MILLIES, TimeUnit.MILLISECONDS);
+		
+		if(ack == null){
+			return false;
+		}else{
+			waitingForAck = false;
+			return true;
+		}
 	}
 
 	private void handleIncomingMessages(Messenger messenger) throws InterruptedException {
@@ -91,8 +179,11 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 		while(!incomingMessages.isEmpty()){
 
 			Message incomingMessage = incomingMessages.take();
-			
-			appConsumer.accept(incomingMessage.data);
+
+			// send message to the app consumer.
+//			new Thread(()->appConsumer.accept(incomingMessage.data)).start();
+			appConsumer.accept(StringConverter.convertFromString(incomingMessage.data));
+
 		}
 	}
 }

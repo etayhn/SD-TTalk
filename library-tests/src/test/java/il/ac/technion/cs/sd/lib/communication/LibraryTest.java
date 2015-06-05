@@ -2,14 +2,9 @@ package il.ac.technion.cs.sd.lib.communication;
 
 import static org.junit.Assert.*;
 
-import java.util.Observable;
-import java.util.Observer;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.function.Consumer;
 
 import il.ac.technion.cs.sd.lib.client.communication.ClientCommunicator;
-import il.ac.technion.cs.sd.lib.serialization.StringConverter;
 import il.ac.technion.cs.sd.lib.server.communication.ServerCommunicator;
 
 import org.junit.After;
@@ -26,12 +21,9 @@ public class LibraryTest {
 	private String clientAddress;
 	private String data;
 	private String data2;
-	private boolean flag1, flag2;
 	
 	private LinkedBlockingQueue<String> serverMessages = new LinkedBlockingQueue<String>();
 	private LinkedBlockingQueue<String> clientMessages = new LinkedBlockingQueue<String>();
-//	private Consumer<String> serverConsumer;
-//	private Consumer<String> clientConsumer;
 
 	@Rule
 	public ExpectedException thrown = ExpectedException.none();
@@ -39,40 +31,39 @@ public class LibraryTest {
 
 	@Before
 	public void setUp() {
+		
+		System.out.println("-------------------------------------");
 		serverAddress = "server";
 		clientAddress = "client";
 		client2Address = "client2";
 		
-		serverCommunicator = new ServerCommunicator(serverAddress, (x) -> serverMessages.add(x));
+		serverCommunicator = new ServerCommunicator(serverAddress, (x) -> serverMessages.add((String)x));
 		clientCommunicator = new ClientCommunicator(clientAddress, serverAddress,
-				(x) -> clientMessages.add(x));
+				(x) -> clientMessages.add((String)x));
 		clientCommunicator2 = new ClientCommunicator(client2Address, serverAddress,
-				(x) -> clientMessages.add(x));
+				(x) -> clientMessages.add((String)x));
 
 		data = "abcd";
 		data2 = "aaaa";
-		flag1 = false;
-		flag2 = false;
 	}
 
 	@After
 	public void teardown() {
-		if (!serverCommunicator.isCommunicatorClosed())
-			serverCommunicator.stop();
 		if (!clientCommunicator.isCommunicatorClosed())
 			clientCommunicator.stop();
 		
 		if (!clientCommunicator2.isCommunicatorClosed())
 			clientCommunicator2.stop();
 
+		if (!serverCommunicator.isCommunicatorClosed())
+			serverCommunicator.stop();
 	}
 
 	@Test
 	public void testServerShouldReceiveAfterClientSend() throws InterruptedException {
 		for(int i=0; i< 100 ; i++){
 			clientCommunicator.send(data);
-			String dataReceived = (String) StringConverter.convertFromString(serverMessages.take());
-			assertEquals(data, dataReceived);
+			assertEquals(data, serverMessages.take());
 		}
 	}
 
@@ -80,9 +71,7 @@ public class LibraryTest {
 	@Test
 	public void testClientShouldReceiveAfterServerSend() throws InterruptedException {
 		serverCommunicator.send(clientAddress, data);
-		
-		String dataReceived = (String) StringConverter.convertFromString(clientMessages.take());
-		assertEquals(data, dataReceived);
+		assertEquals(data, clientMessages.take());
 	}
 
 	@Test
@@ -102,11 +91,8 @@ public class LibraryTest {
 		clientCommunicator.send(data);
 		clientCommunicator2.send(data2);
 		
-		String dataReceived = (String) StringConverter.convertFromString(serverMessages.take());
-		assertEquals(data, dataReceived);
-		
-		dataReceived = (String) StringConverter.convertFromString(serverMessages.take());
-		assertEquals(data2, dataReceived);
+		assertEquals(data, serverMessages.take());
+		assertEquals(data2, serverMessages.take());
 
 	}
 	
@@ -115,29 +101,68 @@ public class LibraryTest {
 
 		serverCommunicator.stop();
 		serverCommunicator = new ServerCommunicator(serverAddress, (x) -> 
-							{serverMessages.add(x);
-							serverCommunicator.send(clientAddress, data);
+							{serverMessages.add((String)x);
+							serverCommunicator.send(clientAddress, data2);
 							});
 
-		int numMessages = 5;
+		int numMessages = 100;
 		for(int i=0; i< numMessages ; i++){
 			clientCommunicator.send(serverAddress, data);
 		}
 		
 		for(int i=0; i< numMessages ; i++){
-			String dataReceivedInServer = (String) StringConverter.convertFromString(serverMessages.take());
-			assertEquals(data, dataReceivedInServer);
+			assertEquals(data, serverMessages.take());
 		}
 		
 		for(int i=0; i< numMessages ; i++){
 
-			String dataReceivedInClient = (String) StringConverter.convertFromString(clientMessages.take());
-			assertEquals(data, dataReceivedInClient);
+			assertEquals(data2, clientMessages.take());
 		}
 
 	}
 	
+	@Test
+	public void testServerMiddleManBetweenClients() throws InterruptedException{
+		
+		serverCommunicator.stop();
+		serverCommunicator = new ServerCommunicator(serverAddress, (x) -> 
+							{serverMessages.add((String)x);
+							if(x.equals(clientAddress)){
+								serverCommunicator.send(client2Address, data);
+							}else{
+								serverCommunicator.send(clientAddress, data2);
+							}
+							});
+		clientCommunicator2.stop();
+		clientCommunicator2= new ClientCommunicator(client2Address, serverAddress, (x)-> {
+									clientMessages.add((String)x);
+									clientCommunicator2.send(serverAddress, client2Address);
+									});
+		clientCommunicator.send(serverAddress, clientAddress);
+		
+		assertEquals(clientAddress, serverMessages.take());
+		assertEquals(client2Address, serverMessages.take());
+		
+		assertEquals(data, clientMessages.take());
+		assertEquals(data2, clientMessages.take());
 
+	}
+	
+	@Test
+	public void testClientCanSendAfterStop() throws InterruptedException{
+
+		clientCommunicator.send(data);
+		clientCommunicator.stop();
+		clientCommunicator = new ClientCommunicator(clientAddress, serverAddress,
+				(x) -> clientMessages.add((String)x));
+		clientCommunicator.send(data2);
+		
+		assertEquals(data, serverMessages.take());
+		assertEquals(data2, serverMessages.take());
+
+		
+		
+	}
 
 }
 

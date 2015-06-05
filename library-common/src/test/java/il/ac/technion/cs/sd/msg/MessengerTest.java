@@ -7,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.junit.*;
@@ -26,6 +27,21 @@ public class MessengerTest {
 	private Messenger startAndAddToList() throws Exception {
 		return startAndAddToList(messengers.size() + "", x -> incomingMessages.add(x));
 	}
+	
+	private Messenger startBiConsumerAndAddToList(String addressFrom, final String addressTo) throws Exception {
+		return startAndAddToList(addressFrom, (x,y) -> {incomingMessages.add(y); try {
+			x.send(addressTo, "");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}});
+	}
+
+	private Messenger startAndAddToList(String address, BiConsumer<Messenger,String> c) throws Exception {
+		Messenger $ = new MessengerFactory().start(address, c);
+		messengers.add($);
+		return $;
+	}
+
 	
 	private Messenger startAndAddToList(String address) throws Exception {
 		return startAndAddToList(address, x -> incomingMessages.add(x));
@@ -47,10 +63,10 @@ public class MessengerTest {
 			} catch (Exception e) {/* do nothing */}
 	}
 	
-	@Test(expected = RuntimeException.class)
-	public void shouldThrowExceptionOnNullConsumer() throws Exception {
-		startAndAddToList("address", null);
-	}
+//	@Test(expected = RuntimeException.class)
+//	public void shouldThrowExceptionOnNullConsumer() throws Exception {
+//		startAndAddToList("address", null);
+//	}
 	
 	@Test(expected = RuntimeException.class)
 	public void shouldThrowAnExceptionOnNullAddress() throws Exception {
@@ -141,13 +157,19 @@ public class MessengerTest {
 	
 	@Test
 	public void emptyMessagesNeverFail() throws Exception {
-		Messenger m1 = startAndAddToList();
-		Messenger m2 = startAndAddToList();
-		for (int i = 0; i < 100; i++) {
+		String client1 = "A";
+		String client2 = "I";
+		Messenger m1 = startBiConsumerAndAddToList(client1, client2);
+		Messenger m2 = startBiConsumerAndAddToList(client2, client1);
+		for (int i = 0; i < 10; i++) {
 			m1.send(m2.getAddress(), "");
+		}
+		for (int i = 0; i < 20; i++) {
 			incomingMessages.take();
 		}
+
 	}
+	
 	
 	@SuppressWarnings("deprecation")
 	@Test
@@ -172,22 +194,31 @@ public class MessengerTest {
 		Messenger sleeper = new MessengerFactory().start("sleeper", (m, x) -> {
 			try {
 				m.send("miracle", "");
-				m.getNextMessage(100);
-				incomingMessages.add("Hi!");
+				m.send("miracle", "");
+
 			} catch (Exception e) {
 				throw new AssertionError(e);
 			}
 		});
 		Messenger waker = new MessengerFactory().start("miracle", (m, x) -> {
 			try {
-				m.send("sleeper", "");
+				if(m.getLastOrNextMessage(200)!= null){
+					incomingMessages.add("Hi!");
+				}
 			} catch (Exception e) {
 				throw new AssertionError(e);
 			}
 		});
-		waker.send(sleeper.getAddress(), "");
-		assertEquals(incomingMessages.take(), "Hi!");
+		for(int i=0 ; i< 100 ; i++){
+			waker.send(sleeper.getAddress(), "");
+		}
+		
+		for(int i=0 ; i< 100 ; i++){
+			System.out.println(incomingMessages.size());
+			assertEquals(incomingMessages.take(), "Hi!");
+		}
 		sleeper.kill();
 		waker.kill();
 	}
+	
 }
