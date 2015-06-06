@@ -30,14 +30,11 @@ public class Server implements IMessageHandler {
 		clients = new HashMap<>();
 
 		communicator = new ServerCommunicator(myAddress,
-				new Consumer<String>() {
+				new Consumer<Object>() {
 
 					@Override
-					public void accept(String t) {
-						IMessage message = (IMessage) StringConverter
-								.convertFromString(t);
-
-						message.handle(Server.this);
+					public void accept(Object o) {
+						((IMessage) o).handle(Server.this);
 					}
 
 				});
@@ -75,7 +72,7 @@ public class Server implements IMessageHandler {
 		// positive answer! new friend!
 		clients.get(message.from).addFriend(message.to);
 		clients.get(message.to).addFriend(message.from);
-		
+
 		send(message.to, message);
 	}
 
@@ -87,6 +84,10 @@ public class Server implements IMessageHandler {
 	@Override
 	public void handle(LoginRequestMessage message) {
 		ClientData clientData = clients.get(message.myAddress);
+		if (clientData == null) {
+			clientData = new ClientData();
+			clients.put(message.myAddress, clientData);
+		}
 		clientData.setOnline(true);
 		send(message.myAddress,
 				new LoginReplyMessage(clientData.getUnsentMessages()));
@@ -110,7 +111,7 @@ public class Server implements IMessageHandler {
 	public void handle(CommonInstantMessage message) {
 		send(message.to, message);
 	}
-	
+
 	public void handle(LogoutRequestMessage message) {
 		clients.get(message.myAddress).setOnline(false);
 		send(message.myAddress, new LogoutReplyMessage());

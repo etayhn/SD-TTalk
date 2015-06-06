@@ -67,14 +67,11 @@ public class Client implements IMessageHandler {
 		this.logoutQueue = new LinkedBlockingDeque<>();
 
 		communicator = new ClientCommunicator(myAddress, serverAddress,
-				new Consumer<String>() {
+				new Consumer<Object>() {
 
 					@Override
-					public void accept(String t) {
-						IMessage message = (IMessage) StringConverter
-								.convertFromString(t);
-
-						message.handle(Client.this);
+					public void accept(Object o) {
+						((IMessage) o).handle(Client.this);
 					}
 
 				});
