@@ -113,8 +113,8 @@ public class Server implements IMessageHandler {
 	}
 
 	public void handle(LogoutRequestMessage message) {
-		clients.get(message.myAddress).setOnline(false);
 		send(message.myAddress, new LogoutReplyMessage());
+		clients.get(message.myAddress).setOnline(false);
 	}
 	
 }
