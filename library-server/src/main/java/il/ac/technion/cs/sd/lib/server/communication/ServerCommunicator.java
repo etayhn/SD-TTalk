@@ -1,7 +1,6 @@
 package il.ac.technion.cs.sd.lib.server.communication;
 
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import il.ac.technion.cs.sd.lib.communication.Communicator;
@@ -9,7 +8,7 @@ import il.ac.technion.cs.sd.lib.communication.Communicator;
 
 public class ServerCommunicator extends Communicator{
 
-	public ServerCommunicator(String myAddress, Consumer<String> consumer) {
+	public ServerCommunicator(String myAddress, Consumer<Object> consumer) {
 		super(myAddress, consumer);
 	}
 	

@@ -1,14 +1,12 @@
 package il.ac.technion.cs.sd.lib.communication;
 
+import il.ac.technion.cs.sd.lib.serialization.StringConverter;
 import il.ac.technion.cs.sd.msg.Messenger;
 import il.ac.technion.cs.sd.msg.MessengerException;
 import il.ac.technion.cs.sd.msg.MessengerFactory;
 
 import java.io.IOException;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-
-import il.ac.technion.cs.sd.lib.serialization.StringConverter;
 
 public abstract class Communicator {
 	/**
@@ -21,8 +19,10 @@ public abstract class Communicator {
 	protected boolean isCommunicatorClosed;
 	
 	protected MessageConsumer messageConsumer;
+	
+	protected int messageCounter;
 
-	public Communicator(String myAddress, Consumer<String> consumer) {
+	public Communicator(String myAddress, Consumer<Object> consumer) {
 		if (myAddress == null)
 			throw new IllegalArgumentException("myAddress cannot be null");
 
@@ -81,14 +81,15 @@ public abstract class Communicator {
 			throw new IllegalArgumentException("data cannot be null");
 
 		String dataAsString = StringConverter.convertToString(data);
-		Message message = new Message(myAddress, dataAsString);
+		Message messageToSend = new Message(myAddress, dataAsString, messageCounter++);
 		try {
-			messageConsumer.sendMessage(message, to, messenger);
+			messageConsumer.sendMessage(messageToSend, to, messenger);
 		} catch (MessengerException e) {
 			throw new RuntimeException("Messenger Exception: " + e.getMessage());
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+
 	}
 
 }
