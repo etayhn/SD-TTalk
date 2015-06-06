@@ -26,6 +26,7 @@ public class ClientData {
 	public ClientData() {
 		friends = new ArrayList<>();
 		unsentMessages = new ArrayList<>();
+		isOnline = false;
 	}
 
 	public boolean isFriendsWith(String name) {

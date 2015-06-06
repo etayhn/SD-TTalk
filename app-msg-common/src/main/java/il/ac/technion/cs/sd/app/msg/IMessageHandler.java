@@ -39,6 +39,10 @@ public interface IMessageHandler {
 		throw new UnsupportedOperationException();
 	}
 	
+	default public void handle(ReceivingApprovalMessage message) {
+		throw new UnsupportedOperationException();
+	}
+	
 	default public void handle(IMessage message) {
 		throw new UnsupportedOperationException();
 	}

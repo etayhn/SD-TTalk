@@ -110,6 +110,7 @@ public class Server implements IMessageHandler {
 	@Override
 	public void handle(CommonInstantMessage message) {
 		send(message.to, message);
+		send(message.from, new ReceivingApprovalMessage());
 	}
 
 	public void handle(LogoutRequestMessage message) {
@@ -117,4 +118,8 @@ public class Server implements IMessageHandler {
 		send(message.myAddress, new LogoutReplyMessage());
 	}
 
+	public void handle(ReceivingApprovalMessage message) {
+		// NOP
+	}
+	
 }
