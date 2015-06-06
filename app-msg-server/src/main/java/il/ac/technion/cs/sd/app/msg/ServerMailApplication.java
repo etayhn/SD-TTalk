@@ -1,9 +1,10 @@
 package il.ac.technion.cs.sd.app.msg;
 
-import il.ac.technion.cs.sd.lib.server.communication.ServerCommunicator;
+import il.ac.technion.cs.sd.lib.serialization.FileHandler;
 
-import java.util.Map;
-import java.util.function.Consumer;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 
 /**
@@ -12,9 +13,20 @@ import java.util.function.Consumer;
  */
 public class ServerMailApplication {
 	
-	private ServerCommunicator communicator;
+	/**
+	 * The server instance
+	 */
+	private Server server;
 	
-	private ServerMessageConsumer consumer;
+	/**
+	 * The server name
+	 */
+	private final String serverName;
+	
+	/**
+	 * The name of the file that holds the backup of the server (if it exists)
+	 */
+	private final String backupFilePath;
 	
     /**
      * Starts a new mail server. Servers with the same name retain all their information until
@@ -24,14 +36,15 @@ public class ServerMailApplication {
      */
 
 	public ServerMailApplication(String string) {
-		throw new UnsupportedOperationException("Not implemented");
+		serverName = string;
+		backupFilePath = "backup_" + serverName + ".txt";
 	}
 	
 	/**
 	 * @return the server's address; this address will be used by clients connecting to the server
 	 */
 	public String getAddress() {
-		throw new UnsupportedOperationException("Not implemented");
+		return serverName;
 	}
 	
 	/**
@@ -39,14 +52,25 @@ public class ServerMailApplication {
 	 * This should be a <b>non-blocking</b> call.
 	 */
 	public void start() {
-		throw new UnsupportedOperationException("Not implemented");
+		try {
+			server = (Server) FileHandler.readFromFile(backupFilePath);
+		} catch (Exception e) {
+			// could not retrieve stored data, starting a fresh new server
+			server = new Server(serverName);
+		}
 	}
 	
 	/**
 	 * Stops the server. A stopped server can't accept messages, but doesn't delete any data (messages that weren't received).
 	 */
 	public void stop() {
-		throw new UnsupportedOperationException("Not implemented");
+		try {
+			FileHandler.writeToFile(server, backupFilePath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		server.stop();
 	}
 	
 	/**
@@ -54,6 +78,10 @@ public class ServerMailApplication {
 	 * run on a new, clean server. you may assume the server is stopped before this method is called.
 	 */
 	public void clean() {
-		throw new UnsupportedOperationException("Not implemented");
+		try {
+			Files.deleteIfExists(Paths.get(backupFilePath));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

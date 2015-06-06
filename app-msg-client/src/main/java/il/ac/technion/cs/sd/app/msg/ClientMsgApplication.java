@@ -1,6 +1,5 @@
 package il.ac.technion.cs.sd.app.msg;
 
-import il.ac.technion.cs.sd.lib.client.communication.ClientCommunicator;
 
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -14,13 +13,11 @@ import java.util.function.Function;
  */
 public class ClientMsgApplication {
 
-	private ClientMessageHandler clientMessageHandler;
-
-	private ClientCommunicator communicator;
+	private Client client;
 
 	private String myAddress;
 	private String serverAddress;
-	
+
 	/**
 	 * Creates a new application, tied to a single user
 	 * 
@@ -34,8 +31,6 @@ public class ClientMsgApplication {
 	public ClientMsgApplication(String serverAddress, String username) {
 		this.serverAddress = serverAddress;
 		this.myAddress = username;
-		
-		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	/**
@@ -58,16 +53,9 @@ public class ClientMsgApplication {
 	public void login(Consumer<InstantMessage> messageConsumer,
 			Function<String, Boolean> friendshipRequestHandler,
 			BiConsumer<String, Boolean> friendshipReplyConsumer) {
-		
-		
-		clientMessageHandler = new ClientMessageHandler(messageConsumer,
-				friendshipRequestHandler, friendshipReplyConsumer);
-		
-		communicator = new ClientCommunicator(myAddress, serverAddress, new ClientMessageConsumer(clientMessageHandler)); 
 
-		// set
-		
-		throw new UnsupportedOperationException("Not implemented");
+		client = new Client(myAddress, serverAddress, messageConsumer,
+				friendshipRequestHandler, friendshipReplyConsumer);
 	}
 
 	/**
@@ -77,7 +65,8 @@ public class ClientMsgApplication {
 	 * logging out.
 	 */
 	public void logout() {
-		throw new UnsupportedOperationException("Not implemented");
+		client.stop();
+		client = null;
 	}
 
 	/**
@@ -89,7 +78,7 @@ public class ClientMsgApplication {
 	 *            The message to send
 	 */
 	public void sendMessage(String target, String what) {
-		throw new UnsupportedOperationException("Not implemented");
+		client.send(new CommonInstantMessage(myAddress, target, what));
 	}
 
 	/**
@@ -103,7 +92,7 @@ public class ClientMsgApplication {
 	 *            The recipient of the friend request.
 	 */
 	public void requestFriendship(String who) {
-		throw new UnsupportedOperationException("Not implemented");
+		client.send(new FriendRequestMessage(myAddress, who));		
 	}
 
 	/**
@@ -118,7 +107,7 @@ public class ClientMsgApplication {
 	 *         of the client
 	 */
 	public Optional<Boolean> isOnline(String who) {
-		throw new UnsupportedOperationException("Not implemented");
+		return client.askIfOnline(who);
 	}
 
 	/**
@@ -128,7 +117,8 @@ public class ClientMsgApplication {
 	 * {@link ClientMsgApplication#login(Consumer, Function, BiConsumer)}
 	 */
 	public void stop() {
-		throw new UnsupportedOperationException("Not implemented");
+		// did not see any reason to do something else..
+		logout();
 	}
 
 }

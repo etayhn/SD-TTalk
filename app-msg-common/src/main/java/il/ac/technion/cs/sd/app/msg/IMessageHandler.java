@@ -27,6 +27,18 @@ public interface IMessageHandler {
 		throw new UnsupportedOperationException();
 	}
 	
+	default public void handle(CommonInstantMessage message) {
+		throw new UnsupportedOperationException();
+	}
+	
+	default public void handle(LogoutRequestMessage message) {
+		throw new UnsupportedOperationException();
+	}
+	
+	default public void handle(LogoutReplyMessage message) {
+		throw new UnsupportedOperationException();
+	}
+	
 	default public void handle(IMessage message) {
 		throw new UnsupportedOperationException();
 	}

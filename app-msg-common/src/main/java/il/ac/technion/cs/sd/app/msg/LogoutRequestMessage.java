@@ -1,10 +1,10 @@
 package il.ac.technion.cs.sd.app.msg;
 
-public class LoginRequestMessage implements IMessage {
+public class LogoutRequestMessage implements IMessage {
 
 	public final String myAddress;
 
-	public LoginRequestMessage(String myAddress) {
+	public LogoutRequestMessage(String myAddress) {
 		this.myAddress = myAddress;
 	}
 
