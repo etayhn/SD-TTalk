@@ -97,6 +97,9 @@ public class Client implements IMessageHandler {
 	}
 
 	public void stop() {
+		if (communicator.isCommunicatorClosed()) {
+			return;
+		}
 		// sending a request
 		send(new LogoutRequestMessage(myAddress));
 
@@ -104,12 +107,13 @@ public class Client implements IMessageHandler {
 		while (true) {
 			try {
 				logoutQueue.take();
-				return;
+				break;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 
+		communicator.stop();
 	}
 
 	public void send(IMessage message) {
@@ -166,7 +170,12 @@ public class Client implements IMessageHandler {
 	}
 
 	public void handle(LogoutReplyMessage message) {
-		communicator.stop();
+		try {
+			logoutQueue.put(message);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }
