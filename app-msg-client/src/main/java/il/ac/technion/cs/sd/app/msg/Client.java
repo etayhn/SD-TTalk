@@ -52,8 +52,6 @@ public class Client implements IMessageHandler {
 
 	private BlockingQueue<LogoutReplyMessage> logoutQueue;
 
-	private BlockingQueue<ReceivingApprovalMessage> successfullySentQueue;
-
 	public Client(String myAddress, String serverAddress,
 			Consumer<InstantMessage> messageConsumer,
 			Function<String, Boolean> friendshipRequestHandler,
@@ -67,7 +65,6 @@ public class Client implements IMessageHandler {
 		this.unreadMessagesQueue = new LinkedBlockingDeque<>();
 		this.isOnlineQueue = new LinkedBlockingDeque<>();
 		this.logoutQueue = new LinkedBlockingDeque<>();
-		this.successfullySentQueue = new LinkedBlockingDeque<>();
 
 		communicator = new ClientCommunicator(myAddress, serverAddress,
 				new Consumer<Object>() {
@@ -121,18 +118,6 @@ public class Client implements IMessageHandler {
 		communicator.send(message);
 	}
 
-	public void sendAndWaitForServerToReceive(IMessage message) {
-		communicator.send(message);
-		while(true) {
-			try {
-				successfullySentQueue.take();
-				break;
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
 	@Override
 	public void handle(FriendReplyMessage message) {
 		friendshipReplyConsumer.accept(message.from, message.answer);
@@ -184,14 +169,6 @@ public class Client implements IMessageHandler {
 
 	public void handle(LogoutReplyMessage message) {
 		communicator.stop();
-	}
-
-	public void handle(ReceivingApprovalMessage message) {
-		try {
-			successfullySentQueue.put(message);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
 	}
 
 }
