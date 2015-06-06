@@ -11,32 +11,29 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+/**
+ * This class represents a message consumer responsible for sending and receiving messages.
+ * @author Avner
+ *
+ */
 public class MessageConsumer implements BiConsumer<Messenger, String>{
 
 	private static final String ACK = "";
 
 	private static final long TIMEOUT_FOR_ACK_IN_MILLIES = 100;
 
-	private LinkedBlockingQueue<Message> outgoingMessages;
-	
 	private LinkedBlockingQueue<Message> incomingMessages;
-	
 	private LinkedBlockingQueue<String> ackMessages;
 	
 	private Consumer<Object> appConsumer;
-	
 	private Map<String, Message> lastMessageReceived;
-	
 	private String myAddress;
-	
 	private boolean waitingForAck;
 
-	
 	public MessageConsumer(Consumer<Object> consumer, String address) {
 		
 		appConsumer = consumer;
 		incomingMessages = new LinkedBlockingQueue<Message>();
-		outgoingMessages = new LinkedBlockingQueue<Message>();
 		ackMessages =  new LinkedBlockingQueue<String>();
 		myAddress = address;
 		
@@ -72,9 +69,10 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 
 				System.out.println("address: " + myAddress + ", uploading message: " + message + " to consumer");		
 				// send message to the app consumer.
+//				new Thread(()->appConsumer.accept(StringConverter.convertFromString(message.data))).start();
 				appConsumer.accept(StringConverter.convertFromString(message.data));
 				
-			// deal with message in the send method.
+			// deal with message after receiving ack.
 			}else{
 				System.out.println("address: " + myAddress + ", put message: " + message + " in queue");
 				incomingMessages.add(message);
@@ -110,11 +108,6 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 	
 	public void sendMessage(Message messageToSend , String to, Messenger messenger) throws InterruptedException, MessengerException {
 
-		if(!outgoingMessages.isEmpty()){
-			System.out.println("address: " + myAddress + 
-						", trying to send message but still has message to send");
-			outgoingMessages.add(messageToSend);
-		}
 		String messgeAsString = StringConverter.convertToString(messageToSend);
 		
 		// send message and wait for Ack
@@ -125,7 +118,6 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 																			+ ", to: " + to);
 			ackRecieved = waitForAck(messenger);
 		}
-		
 		handleIncomingMessages(messenger);
 		
 	}
@@ -156,16 +148,17 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 //			// keep waiting for ack.
 //			return false;
 //		}
-		waitingForAck=  true;
+		waitingForAck = true;
 		
 		String messageReceivedAsString = messenger.getLastOrNextMessage(TIMEOUT_FOR_ACK_IN_MILLIES); 
 
 		if(messageReceivedAsString!= null){
+			System.out.println("address: " + myAddress + 
+			", waited explicitly for message");
+
 			accept(messenger, messageReceivedAsString);
 		}
-		
 		String ack = ackMessages.poll(TIMEOUT_FOR_ACK_IN_MILLIES, TimeUnit.MILLISECONDS);
-		
 		if(ack == null){
 			return false;
 		}else{
@@ -181,8 +174,8 @@ public class MessageConsumer implements BiConsumer<Messenger, String>{
 			Message incomingMessage = incomingMessages.take();
 
 			// send message to the app consumer.
-//			new Thread(()->appConsumer.accept(incomingMessage.data)).start();
 			appConsumer.accept(StringConverter.convertFromString(incomingMessage.data));
+//			new Thread(()->appConsumer.accept(StringConverter.convertFromString(incomingMessage.data))).start();
 
 		}
 	}

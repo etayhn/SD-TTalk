@@ -37,26 +37,35 @@ public class LibraryTest {
 		clientAddress = "client";
 		client2Address = "client2";
 		
-		serverCommunicator = new ServerCommunicator(serverAddress, (x) -> serverMessages.add((String)x));
-		clientCommunicator = new ClientCommunicator(clientAddress, serverAddress,
-				(x) -> clientMessages.add((String)x));
-		clientCommunicator2 = new ClientCommunicator(client2Address, serverAddress,
-				(x) -> clientMessages.add((String)x));
+		serverCommunicator = initServerCommunicator();
+		clientCommunicator = initClientCommunicator(clientAddress);
+		clientCommunicator2 = initClientCommunicator(client2Address);
 
 		data = "abcd";
 		data2 = "aaaa";
 	}
 
+	private ClientCommunicator initClientCommunicator(String clientAddress) {
+		return new ClientCommunicator(clientAddress, serverAddress,
+				(x) -> clientMessages.add((String)x));
+	}
+	
+	private ServerCommunicator initServerCommunicator() {
+		return new ServerCommunicator(serverAddress,
+				(x) -> serverMessages.add((String)x));
+	}
+
 	@After
 	public void teardown() {
-		if (!clientCommunicator.isCommunicatorClosed())
+		if (!serverCommunicator.isCommunicatorStopped())
+			serverCommunicator.stop();
+
+		if (!clientCommunicator.isCommunicatorStopped())
 			clientCommunicator.stop();
 		
-		if (!clientCommunicator2.isCommunicatorClosed())
+		if (!clientCommunicator2.isCommunicatorStopped())
 			clientCommunicator2.stop();
 
-		if (!serverCommunicator.isCommunicatorClosed())
-			serverCommunicator.stop();
 	}
 
 	@Test
@@ -76,14 +85,17 @@ public class LibraryTest {
 
 	@Test
 	public void testClosingCommunication() {
-		assertFalse(serverCommunicator.isCommunicatorClosed());
-		assertFalse(clientCommunicator.isCommunicatorClosed());
+		assertFalse(serverCommunicator.isCommunicatorStopped());
+		assertFalse(clientCommunicator.isCommunicatorStopped());
 
 		serverCommunicator.stop();
 		clientCommunicator.stop();
 
-		assertTrue(serverCommunicator.isCommunicatorClosed());
-		assertTrue(clientCommunicator.isCommunicatorClosed());
+		assertTrue(serverCommunicator.isCommunicatorStopped());
+		assertTrue(clientCommunicator.isCommunicatorStopped());
+		
+		clientCommunicator = initClientCommunicator(clientAddress);
+		serverCommunicator = initServerCommunicator();
 	}
 	
 	@Test
@@ -153,15 +165,24 @@ public class LibraryTest {
 
 		clientCommunicator.send(data);
 		clientCommunicator.stop();
-		clientCommunicator = new ClientCommunicator(clientAddress, serverAddress,
-				(x) -> clientMessages.add((String)x));
+		clientCommunicator = initClientCommunicator(clientAddress);
 		clientCommunicator.send(data2);
 		
 		assertEquals(data, serverMessages.take());
 		assertEquals(data2, serverMessages.take());
+		
+	}
+	
+	@Test
+	public void testServerCanReceiveAfterStop() throws InterruptedException{
 
+		clientCommunicator.send(data);
+		serverCommunicator.stop();
+		serverCommunicator = initServerCommunicator();
+		clientCommunicator.send(data2);
 		
-		
+		assertEquals(data, serverMessages.take());
+		assertEquals(data2, serverMessages.take());
 	}
 
 }

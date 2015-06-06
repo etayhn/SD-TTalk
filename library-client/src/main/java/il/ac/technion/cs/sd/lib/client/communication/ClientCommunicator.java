@@ -10,6 +10,7 @@ import il.ac.technion.cs.sd.msg.MessengerException;
 public class ClientCommunicator extends Communicator{
 
 	String serverAddress;
+	
 	public ClientCommunicator(String myAddress, String serverAddress, Consumer<Object> consumer) {
 		super(myAddress, consumer);
 		
@@ -26,15 +27,11 @@ public class ClientCommunicator extends Communicator{
 		try {
 			messageConsumer.sendMessage(messageToSend, serverAddress, messenger);
 		} catch (MessengerException e) {
-			throw new RuntimeException("Messenger Exception: " + e.getMessage());
+			// doesn't matter if the server is bound.
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 		super.stop();
 	}
-
-	
-	
-
 
 }
