@@ -1,6 +1,9 @@
-package il.ac.technion.cs.sd.msg;
+package il.ac.technion.cs.sd.msg.communication;
 
 import static org.junit.Assert.*;
+import il.ac.technion.cs.sd.msg.Messenger;
+import il.ac.technion.cs.sd.msg.MessengerException;
+import il.ac.technion.cs.sd.msg.MessengerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;

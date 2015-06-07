@@ -1,4 +1,7 @@
-package il.ac.technion.cs.sd.msg;
+package il.ac.technion.cs.sd.msg.communication;
+
+import il.ac.technion.cs.sd.msg.Messenger;
+import il.ac.technion.cs.sd.msg.MessengerFactory;
 
 public class RunThisFirst {
 
