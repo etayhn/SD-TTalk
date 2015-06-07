@@ -79,6 +79,9 @@ public class MessageConsumer implements BiConsumer<Messenger, String> {
 	@Override
 	public void accept(Messenger messenger, String data) {
 
+		if(messenger == null || data == null){
+			throw new IllegalArgumentException("null parameters for method accept");
+		}
 		// received Ack
 		if (data.isEmpty()) {
 
@@ -181,6 +184,10 @@ public class MessageConsumer implements BiConsumer<Messenger, String> {
 	public void sendMessage(Message messageToSend, String to,
 			Messenger messenger) throws InterruptedException,
 			MessengerException {
+		
+		if(messenger == null || messageToSend == null || to == null){
+			throw new IllegalArgumentException("null parameters for method sendMessage");
+		}
 
 		String messgeAsString = StringConverter.convertToString(messageToSend);
 

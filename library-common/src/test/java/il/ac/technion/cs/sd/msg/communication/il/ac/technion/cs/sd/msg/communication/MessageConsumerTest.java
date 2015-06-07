@@ -1,6 +1,7 @@
 package il.ac.technion.cs.sd.msg.communication;
 
 import static org.junit.Assert.*;
+import org.junit.*;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -11,9 +12,6 @@ import il.ac.technion.cs.sd.msg.Messenger;
 import il.ac.technion.cs.sd.msg.MessengerException;
 import il.ac.technion.cs.sd.msg.MessengerFactory;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 public class MessageConsumerTest {
 
@@ -46,6 +44,31 @@ public class MessageConsumerTest {
 		messenger.kill();
 	}
 	
+	@Test(expected = RuntimeException.class)
+	public void acceptShouldThrowAnExceptionOnNullMessenger() throws Exception {
+		messageConsumer.accept(null, messageAsString);
+	}
+	
+	@Test(expected = RuntimeException.class)
+	public void acceptShouldThrowAnExceptionOnNullMessage() throws Exception {
+		messageConsumer.accept(messenger, null);
+	}
+	
+	@Test(expected = RuntimeException.class)
+	public void sendMessageShouldThrowAnExceptionOnNullMessenger() throws Exception {
+		messageConsumer.sendMessage(message, address, null);
+	}
+	
+	@Test(expected = RuntimeException.class)
+	public void sendMessageShouldThrowAnExceptionOnNullMessage() throws Exception {
+		messageConsumer.sendMessage(null, address, messenger);
+	}
+	
+	@Test(expected = RuntimeException.class)
+	public void sendMessageShouldThrowAnExceptionOnNullAddress() throws Exception {
+		messageConsumer.sendMessage(message, null, messenger);
+	}
+
 	@Test
 	public void consumerReceivesMessageCorrectly() throws MessengerException, InterruptedException {
 		messageConsumer.accept(messenger, messageAsString);
