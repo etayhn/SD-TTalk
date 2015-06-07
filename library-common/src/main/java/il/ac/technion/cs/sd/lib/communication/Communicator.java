@@ -7,6 +7,9 @@ import il.ac.technion.cs.sd.msg.MessengerFactory;
 
 import java.util.function.Consumer;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * This is an abstract class that represents a communicator that can send and receive message. 
  * @author avner
@@ -37,6 +40,8 @@ public abstract class Communicator {
 	 * counter for messages sent by this communicator.
 	 */
 	protected int messageCounter;
+	
+	public static Logger logger = LogManager.getRootLogger();
 
 	/**
 	 * builds a new communicator. It will start receiving new messages. 

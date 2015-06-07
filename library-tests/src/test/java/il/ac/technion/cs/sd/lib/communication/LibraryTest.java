@@ -2,6 +2,8 @@ package il.ac.technion.cs.sd.lib.communication;
 
 import static org.junit.Assert.*;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import il.ac.technion.cs.sd.lib.client.communication.ClientCommunicator;
@@ -19,6 +21,7 @@ public class LibraryTest {
 	private ClientCommunicator clientCommunicator2;
 	private String serverAddress;
 	private String clientAddress;
+	private String client2Address;
 	private String data;
 	private String data2;
 	
@@ -27,7 +30,6 @@ public class LibraryTest {
 
 	@Rule
 	public ExpectedException thrown = ExpectedException.none();
-	private String client2Address;
 
 	@Before
 	public void setUp() {
@@ -65,26 +67,43 @@ public class LibraryTest {
 		
 		if (!clientCommunicator2.isCommunicatorStopped())
 			clientCommunicator2.stop();
-
 	}
 
 	@Test
-	public void testServerShouldReceiveAfterClientSend() throws InterruptedException {
+	public void serverShouldReceiveSimpleDataAfterClientSend() throws InterruptedException {
 		for(int i=0; i< 100 ; i++){
 			clientCommunicator.send(data);
 			assertEquals(data, serverMessages.take());
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test
+	public void serverShouldReceiveComplexDataAfterClientSend() throws InterruptedException {
+		LinkedBlockingQueue<Map<String,String>> serverComplexMessages = new LinkedBlockingQueue<Map<String,String>>();
+		Map<String,String> complexData = new ConcurrentHashMap<String, String>();
+		complexData.put("Avner", "Avner");
+		complexData.put("Itay", "Itay");
+
+		serverCommunicator.stop();
+		serverCommunicator = new ServerCommunicator(serverAddress,
+				(x) -> serverComplexMessages.add((Map<String,String>)x));
+		
+		for(int i=0; i< 5 ; i++){
+			clientCommunicator.send(complexData);
+			assertEquals(complexData, serverComplexMessages.take());
+		}
+	}
+
 
 	@Test
-	public void testClientShouldReceiveAfterServerSend() throws InterruptedException {
+	public void clientShouldReceiveAfterServerSend() throws InterruptedException {
 		serverCommunicator.send(clientAddress, data);
 		assertEquals(data, clientMessages.take());
 	}
 
 	@Test
-	public void testClosingCommunication() {
+	public void communicatorShouldBeStoppedAfterStop() {
 		assertFalse(serverCommunicator.isCommunicatorStopped());
 		assertFalse(clientCommunicator.isCommunicatorStopped());
 
@@ -99,17 +118,16 @@ public class LibraryTest {
 	}
 	
 	@Test
-	public void testServerShouldReceiveFromTwoClients() throws InterruptedException {
+	public void serverShouldReceiveFromTwoClients() throws InterruptedException {
 		clientCommunicator.send(data);
-		clientCommunicator2.send(data2);
+		clientCommunicator2.send(data);
 		
 		assertEquals(data, serverMessages.take());
-		assertEquals(data2, serverMessages.take());
-
+		assertEquals(data, serverMessages.take());
 	}
 	
 	@Test
-	public void testServerSendDuringReceiveIsReceivedInClient() throws InterruptedException{
+	public void serverCanSendWhileReceivingFromClient() throws InterruptedException{
 
 		serverCommunicator.stop();
 		serverCommunicator = new ServerCommunicator(serverAddress, (x) -> 
@@ -120,21 +138,14 @@ public class LibraryTest {
 		int numMessages = 100;
 		for(int i=0; i< numMessages ; i++){
 			clientCommunicator.send(serverAddress, data);
-		}
-		
-		for(int i=0; i< numMessages ; i++){
 			assertEquals(data, serverMessages.take());
-		}
-		
-		for(int i=0; i< numMessages ; i++){
-
 			assertEquals(data2, clientMessages.take());
 		}
-
+		
 	}
 	
 	@Test
-	public void testServerMiddleManBetweenClients() throws InterruptedException{
+	public void serverMiddleManBetweenClients() throws InterruptedException{
 		
 		serverCommunicator.stop();
 		serverCommunicator = new ServerCommunicator(serverAddress, (x) -> 
@@ -161,7 +172,7 @@ public class LibraryTest {
 	}
 	
 	@Test
-	public void testClientCanSendAfterStop() throws InterruptedException{
+	public void clientCanSendAfterStop() throws InterruptedException{
 
 		clientCommunicator.send(data);
 		clientCommunicator.stop();
@@ -174,7 +185,7 @@ public class LibraryTest {
 	}
 	
 	@Test
-	public void testServerCanReceiveAfterStop() throws InterruptedException{
+	public void serverCanReceiveAfterStop() throws InterruptedException{
 
 		clientCommunicator.send(data);
 		serverCommunicator.stop();
@@ -184,6 +195,12 @@ public class LibraryTest {
 		assertEquals(data, serverMessages.take());
 		assertEquals(data2, serverMessages.take());
 	}
-
+	
+	@Test
+	public void serverCanSendMsgToSelf() throws InterruptedException{
+		
+		serverCommunicator.send(serverAddress, data);
+		assertEquals(data, serverMessages.take());
+	}
 }
 
