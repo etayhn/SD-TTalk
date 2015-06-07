@@ -1,8 +1,25 @@
 package il.ac.technion.cs.sd.app.msg;
 
+/**
+ * This class represents a regular message, sent from one client to another. The
+ * reason we do not use InstantMessage is that we want it to implement IMessage
+ * (in order to work with the Visitor Design Pattern), and we weren't sure if we
+ * are allowed to do that.
+ */
 public class CommonInstantMessage implements IMessage {
+	/**
+	 * The sender of the message
+	 */
 	public final String from;
+	
+	/**
+	 * The recipient of the message
+	 */
 	public final String to;
+	
+	/**
+	 * The content of the message.
+	 */
 	public final String content;
 
 	public CommonInstantMessage(String from, String to, String content) {
@@ -33,7 +50,7 @@ public class CommonInstantMessage implements IMessage {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		InstantMessage other = (InstantMessage)obj;
+		InstantMessage other = (InstantMessage) obj;
 		if (content == null) {
 			if (other.content != null)
 				return false;
@@ -51,7 +68,6 @@ public class CommonInstantMessage implements IMessage {
 			return false;
 		return true;
 	}
-	
 
 	@Override
 	public void handle(IMessageHandler messageHandler) {

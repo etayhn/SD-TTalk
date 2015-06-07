@@ -66,7 +66,6 @@ public class ClientMsgApplication {
 	 */
 	public void logout() {
 		client.stop();
-		client = null;
 	}
 
 	/**

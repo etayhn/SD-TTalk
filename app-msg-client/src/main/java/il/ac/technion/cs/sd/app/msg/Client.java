@@ -10,6 +10,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * This class represents a client in our client-server architecture. The client
+ * implements IMessageHandler, and implements a visitor design pattern, to allow
+ * it to treat each possible message type differently.
+ */
 public class Client implements IMessageHandler {
 	/**
 	 * The address of the client
@@ -44,12 +49,45 @@ public class Client implements IMessageHandler {
 	 */
 	private final BiConsumer<String, Boolean> friendshipReplyConsumer;
 
+	/**
+	 * A blocking queue we use to wait for a response from the server when it
+	 * needs to send us the unread messages list.
+	 */
 	private BlockingQueue<List<IMessage>> unreadMessagesQueue;
 
+	/**
+	 * A blocking queue we use to wait for a response from the server when it
+	 * needs to send us a response on an <i>isOnline</i> query
+	 */
 	private BlockingQueue<OnlineCheckReplyMessage> isOnlineQueue;
 
+	/**
+	 * A blocking queue we use to wait for a response from the server when it
+	 * needs to send a confirmation that we can safely log out and close our
+	 * communicator.
+	 */
 	private BlockingQueue<LogoutReplyMessage> logoutQueue;
 
+	/**
+	 * Creates a new client, starts the connection with the server, and
+	 * retrieves all of the unread messages that the client got when he was not
+	 * logged in.
+	 * 
+	 * @param myAddress
+	 *            the client's address
+	 * @param serverAddress
+	 *            the server's address
+	 * @param messageConsumer
+	 *            The consumer to handle all incoming messages
+	 * @param friendshipRequestHandler
+	 *            The callback to handle all incoming friend requests. It
+	 *            accepts the user requesting the friendship as input and
+	 *            outputs the reply.
+	 * @param friendshipReplyConsumer
+	 *            The consumer to handle all friend requests replies (replies to
+	 *            outgoing friends requests). The consumer accepts the user
+	 *            requested and his reply.
+	 */
 	public Client(String myAddress, String serverAddress,
 			Consumer<InstantMessage> messageConsumer,
 			Function<String, Boolean> friendshipRequestHandler,
@@ -77,6 +115,10 @@ public class Client implements IMessageHandler {
 		getUnreadMessages();
 	}
 
+	/**
+	 * An auxiliary function used to retrieve the messages that were sent to the
+	 * client when he was not logged in.
+	 */
 	private void getUnreadMessages() {
 		// sending a request
 		send(new LoginRequestMessage(myAddress));
@@ -96,8 +138,11 @@ public class Client implements IMessageHandler {
 		unreadMessages.forEach(m -> m.handle(this));
 	}
 
+	/**
+	 * Stops the client.
+	 */
 	public void stop() {
-		if (communicator.isCommunicatorClosed()) {
+		if (communicator.isCommunicatorStopped()) {
 			return;
 		}
 		// sending a request
@@ -116,6 +161,12 @@ public class Client implements IMessageHandler {
 		communicator.stop();
 	}
 
+	/**
+	 * Sends a message to the server.
+	 * 
+	 * @param message
+	 *            the message to send
+	 */
 	public void send(IMessage message) {
 		communicator.send(message);
 	}

@@ -43,7 +43,6 @@ public class TMsgTest {
 		assertEquals(Optional.of(true), gal.isOnline("Itay")); // itay is a friend and is online
 		itay.logout();
 		assertEquals(Optional.of(false), gal.isOnline("Itay")); // itay is a friend and is offline
-		System.out.println("before logout");
 		gal.logout();
 	}
 }
